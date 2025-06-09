@@ -48,10 +48,13 @@ db = init_firebase()
 # SMTP Configuration from environment variables
 SMTP_SERVER = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
-SMTP_USERNAME = os.environ.get('SMTP_USERNAME')
-SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD')
+SMTP_USERNAME = os.environ.get('SMTP_USERNAME', 'chsantosh2004@gmail.com')
+SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', 'kzka uohw hbxg gwgi')
 
-# Enhanced HTML Template with 3D Effects
+# Streamlit app URL
+STREAMLIT_APP_URL = "https://update-athena-chatbot.streamlit.app"
+
+# Enhanced HTML Template with 3D Effects and Back Button
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -125,6 +128,67 @@ HTML_TEMPLATE = '''
             100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; border-radius: 50%; }
         }
 
+        /* Stylish Back Button */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: linear-gradient(135deg, #6c63ff 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(108, 99, 255, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .back-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(108, 99, 255, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #6c63ff 100%);
+        }
+        
+        .back-button:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        .back-arrow {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        
+        .back-button:hover .back-arrow {
+            transform: translateX(-5px);
+        }
+        
+        /* Floating particles animation */
+        .back-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .back-button:hover::before {
+            opacity: 1;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -137,6 +201,7 @@ HTML_TEMPLATE = '''
             text-align: center;
             margin-bottom: 3rem;
             position: relative;
+            margin-top: 2rem;
         }
 
         .header h1 {
@@ -484,6 +549,10 @@ HTML_TEMPLATE = '''
             .header h1 { font-size: 2rem; }
             .header p { font-size: 1rem; }
             .museum-info { grid-template-columns: 1fr; }
+            .back-button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
         }
 
         .tilt-card {
@@ -502,6 +571,12 @@ HTML_TEMPLATE = '''
         <span></span><span></span><span></span><span></span><span></span>
         <span></span><span></span><span></span><span></span><span></span>
     </div>
+
+    <!-- Stylish Back Button -->
+    <a href="{{ streamlit_url }}" class="back-button">
+        <span class="back-arrow">←</span>
+        <span>Back to Chatbot</span>
+    </a>
 
     <div class="container">
         <div class="header">
@@ -754,7 +829,7 @@ def generate_qr_code(booking_id, hash_code):
         
         img = qr.make_image(fill_color="black", back_color="white")
         buffered = io.BytesIO()
-        img.save(buffered)
+        img.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
         
         return img_str
@@ -772,22 +847,31 @@ def send_confirmation_email(booking_data):
         msg = MIMEMultipart()
         msg['From'] = SMTP_USERNAME
         msg['To'] = booking_data['email']
-        msg['Subject'] = "Athena Museum - Booking Confirmed"
+        msg['Subject'] = "🎫 Athena Museum - Booking Confirmed"
         
         # Generate QR code for email
         qr_code = generate_qr_code(booking_data['booking_id'], booking_data['hash'])
+        
+        if not qr_code:
+            print("Failed to generate QR code for email")
+            qr_code = ""
         
         body = f"""
         <html>
         <head>
             <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                body {{ font-family: 'Poppins', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }}
                 .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background: linear-gradient(135deg, #6c63ff, #764ba2); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
-                .content {{ padding: 30px; background: #f8f9fa; }}
-                .footer {{ background: #e9ecef; padding: 20px; text-align: center; font-size: 14px; border-radius: 0 0 10px 10px; }}
-                .ticket {{ background: white; border: 2px dashed #ccc; padding: 20px; margin: 20px 0; border-radius: 10px; text-align: center; }}
+                .header {{ background: linear-gradient(135deg, #6c63ff, #764ba2); color: white; padding: 30px; text-align: center; border-radius: 15px 15px 0 0; }}
+                .content {{ padding: 30px; background: white; border-radius: 0 0 15px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+                .ticket {{ background: #f8f9fa; border: 2px dashed #6c63ff; padding: 20px; margin: 20px 0; border-radius: 15px; text-align: center; }}
                 .qr-code {{ margin: 20px 0; }}
+                .qr-code img {{ max-width: 200px; border-radius: 10px; padding: 10px; background: white; border: 1px solid #eee; }}
+                .details {{ background: #f0f4ff; padding: 15px; border-radius: 10px; margin: 15px 0; }}
+                .detail-row {{ display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0ff; }}
+                .detail-row:last-child {{ border-bottom: none; }}
+                .footer {{ background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #666; border-radius: 15px; margin-top: 20px; }}
+                .button {{ display: inline-block; background: linear-gradient(135deg, #6c63ff, #764ba2); color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 15px 0; }}
             </style>
         </head>
         <body>
@@ -803,16 +887,41 @@ def send_confirmation_email(booking_data):
                     <div class="ticket">
                         <h3>Your E-Ticket</h3>
                         <div class="qr-code">
-                            <img src="data:image/png;base64,{qr_code}" alt="QR Code" style="max-width: 200px;">
+                            <img src="data:image/png;base64,{qr_code}" alt="QR Code">
                         </div>
                         <p><strong>Booking ID:</strong> {booking_data['booking_id']}</p>
-                        <p><strong>Tickets:</strong> {booking_data['tickets']}</p>
-                        <p><strong>Amount:</strong> ₹{booking_data['amount']}</p>
-                        <p><strong>Valid Until:</strong> {booking_data['validity_str']}</p>
+                        <p><strong>Security Hash:</strong> {booking_data['hash']}</p>
+                    </div>
+                    
+                    <div class="details">
+                        <div class="detail-row">
+                            <span>Email:</span>
+                            <span>{booking_data['email']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Phone:</span>
+                            <span>{booking_data['phone']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Tickets:</span>
+                            <span>{booking_data['tickets']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Amount Paid:</span>
+                            <span>₹{booking_data['amount']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Valid Until:</span>
+                            <span>{booking_data['validity_str']}</span>
+                        </div>
                     </div>
                     
                     <p>Present the QR code above at the museum entrance for entry.</p>
                     <p>We look forward to your visit!</p>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="{STREAMLIT_APP_URL}" class="button">Return to Chatbot</a>
+                    </div>
                 </div>
                 <div class="footer">
                     <p><strong>Athena Museum of Science and Technology</strong></p>
@@ -885,7 +994,7 @@ def home():
     email = request.args.get('email', '')
     if email:
         return redirect(f"/booking/{email}")
-    return render_template_string(HTML_TEMPLATE, page='home')
+    return render_template_string(HTML_TEMPLATE, page='home', streamlit_url=STREAMLIT_APP_URL)
 
 @app.route('/validate', methods=['POST'])
 def validate_email():
@@ -893,13 +1002,15 @@ def validate_email():
     
     if not email:
         return render_template_string(HTML_TEMPLATE, page='error', 
-                                    error_message="Please enter a valid email address.")
+                                    error_message="Please enter a valid email address.",
+                                    streamlit_url=STREAMLIT_APP_URL)
     
     booking = get_booking_by_email(email)
     
     if not booking:
         return render_template_string(HTML_TEMPLATE, page='error',
-                                    error_message="No booking found for this email address. Please check and try again.")
+                                    error_message="No booking found for this email address. Please check and try again.",
+                                    streamlit_url=STREAMLIT_APP_URL)
     
     return redirect(f"/booking/{email}")
 
@@ -909,9 +1020,10 @@ def booking_details(email):
     
     if not booking:
         return render_template_string(HTML_TEMPLATE, page='error',
-                                    error_message="Booking not found or has expired.")
+                                    error_message="Booking not found or has expired.",
+                                    streamlit_url=STREAMLIT_APP_URL)
     
-    return render_template_string(HTML_TEMPLATE, page='booking', booking=booking)
+    return render_template_string(HTML_TEMPLATE, page='booking', booking=booking, streamlit_url=STREAMLIT_APP_URL)
 
 @app.route('/process_payment', methods=['POST'])
 def process_payment_route():
@@ -919,19 +1031,43 @@ def process_payment_route():
     
     if not email:
         return render_template_string(HTML_TEMPLATE, page='error',
-                                    error_message="Invalid request.")
+                                    error_message="Invalid request.",
+                                    streamlit_url=STREAMLIT_APP_URL)
     
     success, message = process_payment(email)
     
     if success:
-        return render_template_string(HTML_TEMPLATE, page='success', email=email)
+        return render_template_string(HTML_TEMPLATE, page='success', email=email, streamlit_url=STREAMLIT_APP_URL)
     else:
         return render_template_string(HTML_TEMPLATE, page='error',
-                                    error_message=message)
+                                    error_message=message,
+                                    streamlit_url=STREAMLIT_APP_URL)
+
+@app.route('/api/process_payment', methods=['POST'])
+def api_process_payment():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'success': False, 'error': 'Email is required'})
+        
+        success, message = process_payment(email)
+        
+        return jsonify({
+            'success': success,
+            'message': message
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
+    return jsonify({
+        "status": "healthy", 
+        "timestamp": datetime.now().isoformat(),
+        "firebase_connected": db is not None
+    })
 
 # Vercel serverless function handler
 @app.route('/<path:path>', methods=['GET', 'POST'])
